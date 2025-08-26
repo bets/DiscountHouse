@@ -560,10 +560,9 @@
                         const chance_l = isLocal && subs_l > 0 ? Math.min(1, units_l / subs_l) : 0;
                         const winners_l = Math.min(units_l, subs_l);
 
-                        // General lottery (remaining subs are the denominator actually used for chance_g)
+                        // General lottery (don't subtract recurring general again; it's already baked into totalSubscribers)
                         let remaining_units = Math.max(0, total_units - (winners_h + winners_c + winners_r + winners_l));
                         let remaining_subs = Math.max(0, totalSubscribers - (winners_h + winners_c + winners_r + winners_l));
-                        remaining_subs = Math.max(0, remaining_subs - recurringPercent * cumulativeWinners.general);
                         const chance_g = remaining_subs > 0 ? Math.min(1, remaining_units / remaining_subs) : 0;
 
                         // Overall chance (sequential draws)
