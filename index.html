@@ -43,6 +43,12 @@
             outline-offset: 2px;
         }
 
+        .project-row td div[title="מחושב - אחרי הורדת זוכים קודמים"] {
+            font-size: 0.9em;
+            font-weight: normal;
+            color: #555;
+        }
+
         th:nth-child(3),
         .project-row td:nth-child(3),
         .chance-row td:nth-child(1) {
@@ -323,14 +329,15 @@
                         ישתמש בהערכה זו</div>
                     <div class="input-container" role="group" aria-labelledby="percent-title">
                         <div class="form-group"><label for="combatPercent">אחוז משרתי מילואים קרביים: </label>
-                            <input type="number" id="combatPercent" min="0" max="100" step="1" value="0"
+                            <input type="number" id="combatPercent" min="0" max="100" step="1" value="10"
                                 style="width: 50px;" aria-label="אחוז משרתי מילואים קרביים">
                         </div>
                         <div class="form-group"><label for="reservedPercent">אחוז משרתי מילואים: </label>
-                            <input type="number" id="reservedPercent" min="0" max="100" step="1" value="0"
+                            <input type="number" id="reservedPercent" min="0" max="100" step="1" value="10"
                                 style="width: 50px;" aria-label="אחוז משרתי מילואים">
                         </div>
-                        <div class="form-group"><label for="recurringSubscribersPercent">אחוז הרשומים בכל הפרוייקטים: </label>
+                        <div class="form-group"><label for="recurringSubscribersPercent">אחוז הרשומים בכל הפרוייקטים:
+                            </label>
                             <input type="number" id="recurringSubscribersPercent" min="0" max="100" step="1" value="90"
                                 style="width: 50px;" aria-label="אחוז הרשומים בכל הפרוייקטים">
                         </div>
@@ -375,22 +382,39 @@
     <div class="bottom-image">
         <img src="https://picsum.photos/400/100" alt="אולי בהמשך פרסומת" />
     </div>
-
     <script>
         let data = {};
         let currentDate;
+
         async function fetchAndDisplayProjects() {
             const loader = document.getElementById('loader');
             loader.classList.add('loader');
             loader.setAttribute('aria-busy', 'true');
 
-            const cityDescription = document.getElementById('cityInput').value;
+            const cityDescription = document.getElementById('cityInput').value.trim();
             const isLocal = document.getElementById('localSubscriber').checked;
             const isHandicapped = document.getElementById('handicappedSubscriber').checked;
             const isReserved = document.getElementById('reservedDutySubscriber').checked;
             const isCombat = document.getElementById('combatReservistSubscriber').checked;
-            const combatPercent = parseFloat(document.getElementById('combatPercent').value) / 100;
-            const reservedPercent = parseFloat(document.getElementById('reservedPercent').value) / 100;
+
+            const combatPercent = parseFloat(document.getElementById('combatPercent').value) / 100 || 0;
+            const reservedPercent = parseFloat(document.getElementById('reservedPercent').value) / 100 || 0;
+            const recurringPercent = parseFloat(document.getElementById('recurringSubscribersPercent').value) / 100 || 0;
+
+            // Helpers
+            function fmtInt(n) {
+                return (typeof n === 'number' && isFinite(n)) ? Math.round(n).toLocaleString('he-IL') : '-';
+            }
+            function renderCell(originalNum, calculatedNum) {
+                const title = "מחושב - אחרי הורדת זוכים קודמים";
+                const origStr = fmtInt(originalNum);
+                const calcStr = fmtInt(calculatedNum);
+                if (calcStr === '-' || origStr === calcStr) return origStr;
+                return `${origStr}<div title="${title}">(${calcStr})</div>`;
+            }
+            function showPctOrDash(v) {
+                return (!isNaN(v) && isFinite(v)) ? (v * 100).toFixed(2) + '%' : '-';
+            }
 
             try {
                 if (Object.keys(data).length === 0) {
@@ -398,7 +422,7 @@
                     const encodedString = encodeURIComponent(queryString);
                     const response = await fetch("https://www.dira.moch.gov.il/api/Invoker?method=Projects&param=" + encodedString, {
                         "headers": {
-                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0",
+                            "User-Agent": "Mozilla/5.0",
                             "Accept": "application/json, text/plain, */*",
                             "Accept-Language": "he-IL,he;q=0.8,en-US;q=0.5,en;q=0.3",
                             "Sec-GPC": "1",
@@ -415,13 +439,39 @@
                     data = await response.json();
                     currentDate = new Date();
                 } else {
-                    //delay to show update
+                    // Small delay to visualize update
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
-                const projects = data.ProjectItems.filter(item => item.CityDescription === cityDescription);
+
+                let projects = (data.ProjectItems || []).filter(item => item.CityDescription === cityDescription);
+
+                // Sort by LotteryNumber ascending (numeric if possible)
+                projects.sort((a, b) => {
+                    const na = Number(a.LotteryNumber);
+                    const nb = Number(b.LotteryNumber);
+                    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+                    return String(a.LotteryNumber || '').localeCompare(String(b.LotteryNumber || ''));
+                });
+
                 const overallChances = [];
 
                 if (projects.length > 0) {
+                    // cumulative winners across projects
+                    const cumulativeWinners = {
+                        handicapped: 0,
+                        combat: 0,
+                        reservist: 0,
+                        local: 0,
+                        general: 0,
+                        total: 0
+                    };
+
+                    // infer handicapped/local % from the first project (safely)
+                    const first = projects[0];
+                    const firstTotalSubscribers = Number(first.TotalSubscribers) || 0;
+                    const inferredHandicappedPercent = firstTotalSubscribers > 0 ? (Number(first.TotalHandicappedSubscribers) || 0) / firstTotalSubscribers : 0;
+                    const inferredLocalPercent = firstTotalSubscribers > 0 ? (Number(first.TotalLocalSubscribers) || 0) / firstTotalSubscribers : 0;
+
                     let tableHtml = `
                     <table aria-describedby="results-caption">
                         <caption id="results-caption">טבלת תוצאות סיכויי זכייה</caption>
@@ -446,106 +496,164 @@
                         <tbody>
                 `;
 
-                    projects.forEach(project => {
-                        const totalSubscribers = project.TotalSubscribers || 0;
-                        const subs_c = (combatPercent > 0 && (project.TotalCombatReservistSubscribers || 0) === 0)
-                            ? Math.round(totalSubscribers * combatPercent)
-                            : (project.TotalCombatReservistSubscribers || 0);
-                        const subs_r = (reservedPercent > 0 && (project.TotalReservedDutySubscribers || 0) === 0)
-                            ? Math.round(totalSubscribers * reservedPercent)
-                            : (project.TotalReservedDutySubscribers || 0);
+                    projects.forEach((project, idx) => {
+                        // ----- TOTAL subscribers: original (raw) -----
+                        const raw_total_subs = Number(project.TotalSubscribers) || 0;
 
-                        tableHtml += `
-    <tr class="project-row">
-        <td>${project.LotteryNumber || ''}</td>
-        <td>${project.CityDescription || ''}</td>
-        <td>${project.PricePerUnit || ''}</td>
-        <td class="bold">${project.TotalHandicappedSubscribers || ''}</td>
-        <td>${project.HousingUnitsForHandicapped || ''}</td>
-        <td class="bold">${subs_c}</td>
-        <td>${project.HU_CombatReservist_L || ''}</td>
-        <td class="bold">${subs_r}</td>
-        <td>${project.HU_Reservists_L || ''}</td>
-        <td class="bold">${project.TotalLocalSubscribers || ''}</td>
-        <td>${project.LocalHousing || ''}</td>
-        <td class="bold">${totalSubscribers}</td>
-        <td>${project.LotteryApparmentsNum || ''}</td>
-        <td></td>
-    </tr>
-`;
+                        // This is the adjusted total used upstream for category estimates (recurring winners only).
+                        const totalSubscribers = Math.max(0, Math.floor(raw_total_subs - recurringPercent * cumulativeWinners.total));
 
-                        const subs_h = project.TotalHandicappedSubscribers || 0;
-                        const units_h = project.HousingUnitsForHandicapped || 0;
+                        // ----- Handicapped: prefer API (>0), else inferred % of RAW total; then calculated (after recurring) -----
+                        const apiHand = Number(project.TotalHandicappedSubscribers);
+                        const orig_h = (Number.isFinite(apiHand) && apiHand > 0)
+                            ? Math.floor(apiHand)
+                            : Math.floor(raw_total_subs * inferredHandicappedPercent);
+                        let subs_h = Math.max(0, Math.floor(orig_h - recurringPercent * cumulativeWinners.handicapped));
+
+                        // ----- Combat: use API only if > 0, else % of RAW total; then calculated (after recurring) -----
+                        const apiCombat = Number(project.TotalCombatReservistSubscribers);
+                        const orig_c = (Number.isFinite(apiCombat) && apiCombat > 0)
+                            ? Math.floor(apiCombat)
+                            : Math.floor(combatPercent > 0 ? raw_total_subs * combatPercent : 0);
+                        let subs_c = Math.max(0, Math.floor(orig_c - recurringPercent * cumulativeWinners.combat));
+
+                        // ----- Reservists: use API only if > 0, else % of RAW total; then calculated (after recurring) -----
+                        const apiReserved = Number(project.TotalReservedDutySubscribers);
+                        const orig_r = (Number.isFinite(apiReserved) && apiReserved > 0)
+                            ? Math.floor(apiReserved)
+                            : Math.floor(reservedPercent > 0 ? raw_total_subs * reservedPercent : 0);
+                        let subs_r = Math.max(0, Math.floor(orig_r - recurringPercent * cumulativeWinners.reservist));
+
+                        // ----- Local: prefer API (>0), else inferred % of RAW total; then calculated (after recurring) -----
+                        const apiLocal = Number(project.TotalLocalSubscribers);
+                        const orig_l = (Number.isFinite(apiLocal) && apiLocal > 0)
+                            ? Math.floor(apiLocal)
+                            : Math.floor(raw_total_subs * inferredLocalPercent);
+                        let subs_l = Math.max(0, Math.floor(orig_l - recurringPercent * cumulativeWinners.local));
+
+                        // Units per category
+                        const units_h = Number(project.HousingUnitsForHandicapped) || 0;
+                        const units_c = Number(project.HU_CombatReservist_L) || 0;
+                        const units_r = Number(project.HU_Reservists_L) || 0;
+                        const units_l = Number(project.LocalHousing) || 0;
+                        const total_units = Number(project.LotteryApparmentsNum) || 0;
+
+                        // Price field
+                        const price_per_unit = (project.PricePerUnit ?? '');
+
+                        // Chances per category
                         const chance_h = isHandicapped && subs_h > 0 ? Math.min(1, units_h / subs_h) : 0;
 
-                        const units_c = project.HU_CombatReservist_L || 0;
-                        const chance_c = isCombat && subs_c > 0 ? Math.min(1, units_c / subs_c) : 0;
+                        // Winners per category and spillover (combat -> reservist)
+                        const winners_h = Math.min(units_h, subs_h);
 
-                        const remaining_combat = subs_c > units_c ? subs_c - units_c : 0;
-                        const effective_subs_r = subs_r + remaining_combat;
-                        const units_r = project.HU_Reservists_L || 0;
+                        const winners_c = Math.min(units_c, subs_c);
+                        const remaining_combat = Math.max(0, subs_c - winners_c);
+
+                        // effective_subs_r is what is actually used for reservist chance
+                        const effective_subs_r = Math.max(0, subs_r + remaining_combat);
+                        const chance_c = isCombat && subs_c > 0 ? Math.min(1, units_c / subs_c) : 0;
                         const chance_r = (isReserved || isCombat) && effective_subs_r > 0 ? Math.min(1, units_r / effective_subs_r) : 0;
 
-                        const subs_l = project.TotalLocalSubscribers || 0;
-                        const units_l = project.LocalHousing || 0;
-                        const chance_l = isLocal && subs_l > 0 ? Math.min(1, units_l / subs_l) : 0;
-
-                        const winners_h = Math.min(units_h, subs_h);
-                        const winners_c = Math.min(units_c, subs_c);
                         const winners_r = Math.min(units_r, effective_subs_r);
+
+                        const chance_l = isLocal && subs_l > 0 ? Math.min(1, units_l / subs_l) : 0;
                         const winners_l = Math.min(units_l, subs_l);
-                        const remaining_units = project.LotteryApparmentsNum - (winners_h + winners_c + winners_r + winners_l);
-                        const remaining_subs = totalSubscribers - (winners_h + winners_c + winners_r + winners_l);
+
+                        // General lottery (remaining subs are the denominator actually used for chance_g)
+                        let remaining_units = Math.max(0, total_units - (winners_h + winners_c + winners_r + winners_l));
+                        let remaining_subs = Math.max(0, totalSubscribers - (winners_h + winners_c + winners_r + winners_l));
+                        remaining_subs = Math.max(0, remaining_subs - recurringPercent * cumulativeWinners.general);
                         const chance_g = remaining_subs > 0 ? Math.min(1, remaining_units / remaining_subs) : 0;
 
+                        // Overall chance (sequential draws)
                         let overall_chance = 0;
                         let prob_not_won = 1;
+                        function safeAddChance(ch) {
+                            if (!isNaN(ch) && isFinite(ch) && ch > 0) {
+                                overall_chance += prob_not_won * ch;
+                                prob_not_won *= (1 - ch);
+                            }
+                        }
+                        safeAddChance(chance_h);
+                        safeAddChance(chance_c);
+                        safeAddChance(chance_r);
+                        safeAddChance(chance_l);
+                        safeAddChance(chance_g);
 
-                        if (isHandicapped && chance_h > 0) {
-                            overall_chance += prob_not_won * chance_h;
-                            prob_not_won *= (1 - chance_h);
-                        }
-                        if (isCombat && chance_c > 0) {
-                            overall_chance += prob_not_won * chance_c;
-                            prob_not_won *= (1 - chance_c);
-                        }
-                        if ((isCombat || isReserved) && chance_r > 0) {
-                            overall_chance += prob_not_won * chance_r;
-                            prob_not_won *= (1 - chance_r);
-                        }
-                        if (isLocal && chance_l > 0) {
-                            overall_chance += prob_not_won * chance_l;
-                            prob_not_won *= (1 - chance_l);
-                        }
-                        if (chance_g > 0) {
-                            overall_chance += prob_not_won * chance_g;
-                        }
+                        const overall_chance_percent = (!isNaN(overall_chance) && isFinite(overall_chance)) ? (overall_chance * 100).toFixed(2) + '%' : '-';
+                        overallChances.push(!isNaN(overall_chance) && isFinite(overall_chance) ? Math.max(0, Math.min(1, overall_chance)) : 0);
 
-                        const overall_chance_percent = (overall_chance * 100).toFixed(2) + '%';
-                        overallChances.push(overall_chance);
+                        // Update cumulative winners
+                        const general_winners = Math.min(remaining_units, remaining_subs);
+                        cumulativeWinners.handicapped += winners_h;
+                        cumulativeWinners.combat += winners_c;
+                        cumulativeWinners.reservist += winners_r;
+                        cumulativeWinners.local += winners_l;
+                        cumulativeWinners.general += general_winners;
+                        cumulativeWinners.total =
+                            cumulativeWinners.handicapped +
+                            cumulativeWinners.combat +
+                            cumulativeWinners.reservist +
+                            cumulativeWinners.local +
+                            cumulativeWinners.general;
+
+                        // Rows (now showing calculated values that match the actual chance denominators)
+                        tableHtml += `
+                        <tr class="project-row">
+                            <td>${project.LotteryNumber || ''}</td>
+                            <td>${project.CityDescription || ''}</td>
+                            <td>${price_per_unit}</td>
+
+                            <!-- Handicapped: original vs calculated (post-recurring) -->
+                            <td class="bold">${renderCell(orig_h, subs_h)}</td>
+                            <td>${fmtInt(units_h)}</td>
+
+                            <!-- Combat: original vs calculated (post-recurring) -->
+                            <td class="bold">${renderCell(orig_c, subs_c)}</td>
+                            <td>${fmtInt(units_c)}</td>
+
+                            <!-- Reservists: original vs calculated = effective_subs_r (includes spillover) -->
+                            <td class="bold">${renderCell(orig_r, effective_subs_r)}</td>
+                            <td>${fmtInt(units_r)}</td>
+
+                            <!-- Local: original vs calculated (post-recurring) -->
+                            <td class="bold">${renderCell(orig_l, subs_l)}</td>
+                            <td>${fmtInt(units_l)}</td>
+
+                            <!-- Total subscribers: original (API) vs calculated = remaining_subs (general pool denom) -->
+                            <td class="bold">${renderCell(raw_total_subs, remaining_subs)}</td>
+                            <!-- Total units: original vs calculated = remaining_units (general pool numerator) -->
+                            <td>${renderCell(total_units, remaining_units)}</td>
+
+                            <td></td>
+                        </tr>
+                    `;
 
                         tableHtml += `
                         <tr class="chance-row">
                             <td colspan="3">סיכויי זכייה</td>
-                            <td>${isHandicapped && subs_h > 0 ? (chance_h * 100).toFixed(2) + '%' : '-'}</td>
+                            <td>${isHandicapped ? showPctOrDash(chance_h) : '-'}</td>
                             <td></td>
-                            <td>${isCombat && subs_c > 0 ? (chance_c * 100).toFixed(2) + '%' : '-'}</td>
+                            <td>${isCombat ? showPctOrDash(chance_c) : '-'}</td>
                             <td></td>
-                            <td>${(isReserved || isCombat) && effective_subs_r > 0 ? (chance_r * 100).toFixed(2) + '%' : '-'}</td>
+                            <td>${(isReserved || isCombat) ? showPctOrDash(chance_r) : '-'}</td>
                             <td></td>
-                            <td>${isLocal && subs_l > 0 ? (chance_l * 100).toFixed(2) + '%' : '-'}</td>
+                            <td>${isLocal ? showPctOrDash(chance_l) : '-'}</td>
                             <td></td>
-                            <td>${chance_g > 0 ? (chance_g * 100).toFixed(2) + '%' : '0%'}</td>
+                            <td>${showPctOrDash(chance_g)}</td>
                             <td></td>
                             <td>${overall_chance_percent}</td>
                         </tr>
                     `;
                     });
 
-                    const total_city_chance = overallChances.length > 0
-                        ? (1 - overallChances.reduce((product, chance) => product * (1 - chance), 1)) * 100
+                    const total_city_chance_val = overallChances.length > 0
+                        ? (1 - overallChances.reduce((product, chance) => product * (1 - chance), 1))
                         : 0;
-                    const total_city_chance_percent = total_city_chance.toFixed(2) + '%';
+                    const total_city_chance_percent = (!isNaN(total_city_chance_val) && isFinite(total_city_chance_val))
+                        ? (Math.max(0, Math.min(1, total_city_chance_val)) * 100).toFixed(2) + '%'
+                        : '-';
 
                     tableHtml += `
                     <tr class="total-row">
@@ -558,21 +666,15 @@
 
                     document.getElementById('results').innerHTML = tableHtml;
 
-                    // after results append the current date and time
-                    // Get the day, month, and year
+                    // timestamp
                     const day = String(currentDate.getDate()).padStart(2, '0');
-                    const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed, so add 1
+                    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
                     const year = String(currentDate.getFullYear()).slice(-2);
-
-                    // Combine them in the desired format
                     const dateString = `${day}.${month}.${year}`;
-                    const timeString = currentDate.toLocaleTimeString('he-IL', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    });
+                    const timeString = currentDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
                     document.getElementById('results').innerHTML += `
-                        <p>מעודכן ל ${dateString} ${timeString} (רענון הדף ייבא נתונים מחדש)</p>
-                    `;
+                    <p>מעודכן ל ${dateString} ${timeString} (רענון הדף ייבא נתונים מחדש)</p>
+                `;
                 } else {
                     document.getElementById('results').innerHTML = `<p role="alert">לא נמצאו פרויקטים עם תיאור העיר '${cityDescription}'.</p>`;
                 }
