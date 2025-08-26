@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+
+<head>
+    <title>סיכויי זכייה - דירה בהנחה</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: right;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px;
+            background: #fff;
+            color: #222;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            /* border: 1px solid #222; */
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        th:focus,
+        td:focus,
+        input:focus,
+        button:focus,
+        select:focus {
+            outline: 2px solid #005fcc;
+            outline-offset: 2px;
+        }
+
+        th:nth-child(3),
+        .project-row td:nth-child(3),
+        .chance-row td:nth-child(1) {
+            border-left: 3px solid #ddd;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #e6f7ff;
+        }
+
+        .checkbox-container {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .checkbox-container label {
+            margin-left: 15px;
+        }
+
+        .input-container {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-container input[type="search"],
+        .input-container input[type="number"] {
+            padding: 5px;
+            margin-left: 10px;
+        }
+
+        .input-container button {
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .chance-row {
+            background-color: #e0f7fa;
+        }
+
+        .total-row {
+            background-color: #eeddc2 !important;
+            font-weight: bold;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .loader {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.137);
+            display: block;
+            perspective: 1000px;
+            border-radius: 50%;
+            width: 348px;
+            height: 348px;
+            color: #7a96e4;
+        }
+
+        .loader:before,
+        .loader:after {
+            content: '';
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: inherit;
+            height: inherit;
+            border-radius: 50%;
+            transform: rotateX(70deg);
+            animation: 1.2s spin linear infinite;
+        }
+
+        .loader:after {
+            color: #FF3D00;
+            transform: rotateY(70deg);
+            animation-delay: .4s;
+        }
+
+        @keyframes spin {
+
+            0%,
+            100% {
+                box-shadow: .6em 0px 0 0px currentcolor;
+            }
+
+            12% {
+                box-shadow: .6em .6em 0 0 currentcolor;
+            }
+
+            25% {
+                box-shadow: 0 .6em 0 0px currentcolor;
+            }
+
+            37% {
+                box-shadow: -.8em .8em 0 0 currentcolor;
+            }
+
+            50% {
+                box-shadow: -.2em 0 0 0 currentcolor;
+            }
+
+            62% {
+                box-shadow: -.2em -.2em 0 0 currentcolor;
+            }
+
+            75% {
+                box-shadow: 0px -.2em 0 0 currentcolor;
+            }
+
+            87% {
+                box-shadow: .2em -.2em 0 0 currentcolor;
+            }
+        }
+
+        @media screen and (max-width: 1024px) {
+            table {
+                font-size: 14px;
+            }
+
+            th,
+            td {
+                padding: 6px 4px;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin: 0 -15px;
+                padding: 0 15px;
+            }
+
+            table {
+                min-width: 800px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            body {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+
+            h3 {
+                font-size: 1.2em;
+                margin-bottom: 10px;
+            }
+
+            input,
+            button {
+                font-size: 16px;
+            }
+        }
+
+        h3 {
+            margin-top: 30px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        /* Visually hidden class for accessibility */
+        .visually-hidden {
+            position: absolute !important;
+            height: 1px;
+            width: 1px;
+            overflow: hidden;
+            clip: rect(1px, 1px, 1px, 1px);
+            white-space: nowrap;
+        }
+
+        fieldset {
+            padding: 0;
+            border: 0;
+        }
+
+        #results-caption {
+            font-size: 1.5em;
+            font-weight: bold;
+            padding: 1em;
+            text-align: right;
+
+        }
+
+        .main-flex {
+            display: flex;
+            flex-direction: row-reverse;
+            align-items: flex-start;
+            gap: 30px;
+        }
+
+        .form-container {
+            flex: 1 1 0;
+            min-width: 250px;
+        }
+
+        .form-group {
+            display: inline-block
+        }
+
+        @media screen and (max-width: 900px) {
+            .main-flex {
+                gap: 15px;
+            }
+        }
+
+        @media screen and (max-width: 600px) {
+            .main-flex {
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+
+
+        }
+
+        .bottom-image {
+            width: 100%;
+            /* text-align: center; */
+            margin-top: 20px;
+        }
+
+        .bottom-image img {
+            max-height: 100px;
+            width: auto;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+</head>
+
+<body>
+    <span id="loader" class="" aria-live="polite" aria-busy="false"></span>
+    <h1>בדיקת סיכויי זכייה - דירה בהנחה</h1>
+    <div style="color: rgb(99, 99, 99);">מחשבון זה נעשה לשימוש עצמי ואין אחריות על שימוש והתוצאות</div>
+
+    <div class="main-flex">
+
+        <div class="form-container">
+            <form aria-labelledby="form-title">
+                <fieldset>
+                    <legend id="form-title" class="visually-hidden">הגדרות חישוב</legend>
+                    <h3 id="status-title">בחר את המעמד שלך</h3>
+                    <div class="checkbox-container" role="group" aria-labelledby="status-title">
+                        <label for="handicappedSubscriber"><input type="checkbox" id="handicappedSubscriber"
+                                value="HandicappedSubscriber"> בעל מוגבלות</label>
+                        <label for="combatReservistSubscriber"><input type="checkbox" id="combatReservistSubscriber"
+                                value="CombatReservistSubscriber"> מילואים קרבי</label>
+                        <label for="reservedDutySubscriber"><input type="checkbox" id="reservedDutySubscriber"
+                                value="ReservedDutySubscriber"> מילואים</label>
+                        <label for="localSubscriber"><input type="checkbox" id="localSubscriber"
+                                value="LocalSubscriber"> בן
+                            העיר</label>
+                    </div>
+
+                    <h3 id="percent-title">הערכות</h3>
+                    <div style="color: rgb(99, 99, 99);font-weight: normal; margin-bottom: 10px;">כל עוד אין מידע רשמי
+                        המחשבון
+                        ישתמש בהערכה זו</div>
+                    <div class="input-container" role="group" aria-labelledby="percent-title">
+                        <div class="form-group"><label for="combatPercent">אחוז משרתי מילואים קרביים: </label>
+                            <input type="number" id="combatPercent" min="0" max="100" step="1" value="0"
+                                style="width: 50px;" aria-label="אחוז משרתי מילואים קרביים">
+                        </div>
+                        <div class="form-group"><label for="reservedPercent">אחוז משרתי מילואים: </label>
+                            <input type="number" id="reservedPercent" min="0" max="100" step="1" value="0"
+                                style="width: 50px;" aria-label="אחוז משרתי מילואים">
+                        </div>
+                        <div class="form-group"><label for="recurringSubscribersPercent">אחוז הרשומים בכל הפרוייקטים: </label>
+                            <input type="number" id="recurringSubscribersPercent" min="0" max="100" step="1" value="90"
+                                style="width: 50px;" aria-label="אחוז הרשומים בכל הפרוייקטים">
+                        </div>
+                    </div>
+
+                    <h3 id="city-title">חיפוש לפי עיר</h3>
+                    <div class="input-container" role="group" aria-labelledby="city-title">
+                        <label for="cityInput">עיר: </label>
+                        <input type="search" id="cityInput" list="cityList" value="" aria-label="בחר עיר">
+                        <datalist id="cityList">
+                            <option value="אכסאל">
+                            <option value="אשקלון">
+                            <option value="באר יעקב">
+                            <option value="באר שבע">
+                            <option value="בית שמש">
+                            <option value="דימונה">
+                            <option value="טבריה">
+                            <option value="יבנה">
+                            <option value="יהוד">
+                            <option value="ירושלים">
+                            <option value="כפר ורדים">
+                            <option value="מעלות-תרשיחא">
+                            <option value="מצפה רמון">
+                            <option value="נוף הגליל">
+                            <option value="נתניה">
+                            <option value="עכו">
+                            <option value="עפולה">
+                            <option value="קריית ביאליק">
+                            <option value="קריית גת">
+                            <option value="קריית עקרון">
+                            <option value="רעננה">
+                        </datalist>
+                        <button type="button" onclick="fetchAndDisplayProjects()" aria-label="חשב תוצאות">חשב</button>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+    <div id="results" class="table-wrapper" aria-live="polite"></div>
+
+    <!-- Add the image here, at the bottom of the page -->
+    <div class="bottom-image">
+        <img src="https://picsum.photos/400/100" alt="אולי בהמשך פרסומת" />
+    </div>
+
+    <script>
+        let data = {};
+        let currentDate;
+        async function fetchAndDisplayProjects() {
+            const loader = document.getElementById('loader');
+            loader.classList.add('loader');
+            loader.setAttribute('aria-busy', 'true');
+
+            const cityDescription = document.getElementById('cityInput').value;
+            const isLocal = document.getElementById('localSubscriber').checked;
+            const isHandicapped = document.getElementById('handicappedSubscriber').checked;
+            const isReserved = document.getElementById('reservedDutySubscriber').checked;
+            const isCombat = document.getElementById('combatReservistSubscriber').checked;
+            const combatPercent = parseFloat(document.getElementById('combatPercent').value) / 100;
+            const reservedPercent = parseFloat(document.getElementById('reservedPercent').value) / 100;
+
+            try {
+                if (Object.keys(data).length === 0) {
+                    const queryString = "?firstApplicantIdentityNumber=&secondApplicantIdentityNumber=&ProjectStatus=4&Entitlement=1&PageNumber=1&PageSize=75&IsInit=true&";
+                    const encodedString = encodeURIComponent(queryString);
+                    const response = await fetch("https://www.dira.moch.gov.il/api/Invoker?method=Projects&param=" + encodedString, {
+                        "headers": {
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0",
+                            "Accept": "application/json, text/plain, */*",
+                            "Accept-Language": "he-IL,he;q=0.8,en-US;q=0.5,en;q=0.3",
+                            "Sec-GPC": "1",
+                            "Sec-Fetch-Dest": "empty",
+                            "Sec-Fetch-Mode": "cors",
+                            "Pragma": "no-cache",
+                            "Cache-Control": "no-cache"
+                        },
+                        "referrer": "https://www.dira.moch.gov.il/ProjectsList",
+                        "method": "GET",
+                        "mode": "cors"
+                    });
+
+                    data = await response.json();
+                    currentDate = new Date();
+                } else {
+                    //delay to show update
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+                const projects = data.ProjectItems.filter(item => item.CityDescription === cityDescription);
+                const overallChances = [];
+
+                if (projects.length > 0) {
+                    let tableHtml = `
+                    <table aria-describedby="results-caption">
+                        <caption id="results-caption">טבלת תוצאות סיכויי זכייה</caption>
+                        <thead>
+                        <tr>
+                            <th scope="col">הגרלה</th>
+                            <th scope="col">עיר</th>
+                            <th scope="col">מחיר למ"ר</th>
+                            <th scope="col">נרשמים עם מוגבלות</th>
+                            <th scope="col">דירות לבעלי מוגבלות</th>
+                            <th scope="col">נרשמים מילואים קרביים</th>
+                            <th scope="col">דירות למילואים קרביים</th>
+                            <th scope="col">נרשמים מילואים</th>
+                            <th scope="col">דירות למילואים</th>
+                            <th scope="col">נרשמים בני העיר</th>
+                            <th scope="col">דירות בני העיר</th>
+                            <th scope="col">סה"כ נרשמים</th>
+                            <th scope="col">דירות</th>
+                            <th scope="col">סיכוי זכייה כולל</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                    projects.forEach(project => {
+                        const totalSubscribers = project.TotalSubscribers || 0;
+                        const subs_c = (combatPercent > 0 && (project.TotalCombatReservistSubscribers || 0) === 0)
+                            ? Math.round(totalSubscribers * combatPercent)
+                            : (project.TotalCombatReservistSubscribers || 0);
+                        const subs_r = (reservedPercent > 0 && (project.TotalReservedDutySubscribers || 0) === 0)
+                            ? Math.round(totalSubscribers * reservedPercent)
+                            : (project.TotalReservedDutySubscribers || 0);
+
+                        tableHtml += `
+    <tr class="project-row">
+        <td>${project.LotteryNumber || ''}</td>
+        <td>${project.CityDescription || ''}</td>
+        <td>${project.PricePerUnit || ''}</td>
+        <td class="bold">${project.TotalHandicappedSubscribers || ''}</td>
+        <td>${project.HousingUnitsForHandicapped || ''}</td>
+        <td class="bold">${subs_c}</td>
+        <td>${project.HU_CombatReservist_L || ''}</td>
+        <td class="bold">${subs_r}</td>
+        <td>${project.HU_Reservists_L || ''}</td>
+        <td class="bold">${project.TotalLocalSubscribers || ''}</td>
+        <td>${project.LocalHousing || ''}</td>
+        <td class="bold">${totalSubscribers}</td>
+        <td>${project.LotteryApparmentsNum || ''}</td>
+        <td></td>
+    </tr>
+`;
+
+                        const subs_h = project.TotalHandicappedSubscribers || 0;
+                        const units_h = project.HousingUnitsForHandicapped || 0;
+                        const chance_h = isHandicapped && subs_h > 0 ? Math.min(1, units_h / subs_h) : 0;
+
+                        const units_c = project.HU_CombatReservist_L || 0;
+                        const chance_c = isCombat && subs_c > 0 ? Math.min(1, units_c / subs_c) : 0;
+
+                        const remaining_combat = subs_c > units_c ? subs_c - units_c : 0;
+                        const effective_subs_r = subs_r + remaining_combat;
+                        const units_r = project.HU_Reservists_L || 0;
+                        const chance_r = (isReserved || isCombat) && effective_subs_r > 0 ? Math.min(1, units_r / effective_subs_r) : 0;
+
+                        const subs_l = project.TotalLocalSubscribers || 0;
+                        const units_l = project.LocalHousing || 0;
+                        const chance_l = isLocal && subs_l > 0 ? Math.min(1, units_l / subs_l) : 0;
+
+                        const winners_h = Math.min(units_h, subs_h);
+                        const winners_c = Math.min(units_c, subs_c);
+                        const winners_r = Math.min(units_r, effective_subs_r);
+                        const winners_l = Math.min(units_l, subs_l);
+                        const remaining_units = project.LotteryApparmentsNum - (winners_h + winners_c + winners_r + winners_l);
+                        const remaining_subs = totalSubscribers - (winners_h + winners_c + winners_r + winners_l);
+                        const chance_g = remaining_subs > 0 ? Math.min(1, remaining_units / remaining_subs) : 0;
+
+                        let overall_chance = 0;
+                        let prob_not_won = 1;
+
+                        if (isHandicapped && chance_h > 0) {
+                            overall_chance += prob_not_won * chance_h;
+                            prob_not_won *= (1 - chance_h);
+                        }
+                        if (isCombat && chance_c > 0) {
+                            overall_chance += prob_not_won * chance_c;
+                            prob_not_won *= (1 - chance_c);
+                        }
+                        if ((isCombat || isReserved) && chance_r > 0) {
+                            overall_chance += prob_not_won * chance_r;
+                            prob_not_won *= (1 - chance_r);
+                        }
+                        if (isLocal && chance_l > 0) {
+                            overall_chance += prob_not_won * chance_l;
+                            prob_not_won *= (1 - chance_l);
+                        }
+                        if (chance_g > 0) {
+                            overall_chance += prob_not_won * chance_g;
+                        }
+
+                        const overall_chance_percent = (overall_chance * 100).toFixed(2) + '%';
+                        overallChances.push(overall_chance);
+
+                        tableHtml += `
+                        <tr class="chance-row">
+                            <td colspan="3">סיכויי זכייה</td>
+                            <td>${isHandicapped && subs_h > 0 ? (chance_h * 100).toFixed(2) + '%' : '-'}</td>
+                            <td></td>
+                            <td>${isCombat && subs_c > 0 ? (chance_c * 100).toFixed(2) + '%' : '-'}</td>
+                            <td></td>
+                            <td>${(isReserved || isCombat) && effective_subs_r > 0 ? (chance_r * 100).toFixed(2) + '%' : '-'}</td>
+                            <td></td>
+                            <td>${isLocal && subs_l > 0 ? (chance_l * 100).toFixed(2) + '%' : '-'}</td>
+                            <td></td>
+                            <td>${chance_g > 0 ? (chance_g * 100).toFixed(2) + '%' : '0%'}</td>
+                            <td></td>
+                            <td>${overall_chance_percent}</td>
+                        </tr>
+                    `;
+                    });
+
+                    const total_city_chance = overallChances.length > 0
+                        ? (1 - overallChances.reduce((product, chance) => product * (1 - chance), 1)) * 100
+                        : 0;
+                    const total_city_chance_percent = total_city_chance.toFixed(2) + '%';
+
+                    tableHtml += `
+                    <tr class="total-row">
+                        <td colspan="13">סיכוי זכייה כולל בעיר</td>
+                        <td>${total_city_chance_percent}</td>
+                    </tr>
+                    </tbody>
+                    </table>
+                `;
+
+                    document.getElementById('results').innerHTML = tableHtml;
+
+                    // after results append the current date and time
+                    // Get the day, month, and year
+                    const day = String(currentDate.getDate()).padStart(2, '0');
+                    const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed, so add 1
+                    const year = String(currentDate.getFullYear()).slice(-2);
+
+                    // Combine them in the desired format
+                    const dateString = `${day}.${month}.${year}`;
+                    const timeString = currentDate.toLocaleTimeString('he-IL', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    });
+                    document.getElementById('results').innerHTML += `
+                        <p>מעודכן ל ${dateString} ${timeString} (רענון הדף ייבא נתונים מחדש)</p>
+                    `;
+                } else {
+                    document.getElementById('results').innerHTML = `<p role="alert">לא נמצאו פרויקטים עם תיאור העיר '${cityDescription}'.</p>`;
+                }
+            } catch (error) {
+                document.getElementById('results').innerHTML = `<p role="alert">אירעה שגיאה: ${error.message}</p>`;
+            } finally {
+                loader.classList.remove('loader');
+                loader.setAttribute('aria-busy', 'false');
+            }
+        }
+    </script>
+</body>
+
+</html>
