@@ -7,8 +7,12 @@
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Varela+Round&display=swap');
+    </style>
+    <style>
         body {
-            font-family: Arial, sans-serif;
+            /* font-family: Arial, sans-serif; */
+            font-family: "Varela Round", sans-serif;
             text-align: right;
             max-width: 1200px;
             margin: 0 auto;
@@ -20,6 +24,10 @@
         .autoMargin {
             margin: 0 auto;
             width: fit-content;
+        }
+
+        li {
+            margin-bottom: 4px;
         }
 
         table {
@@ -311,7 +319,7 @@
         }
 
         .bottom-image #frame {
-            max-height: 100px;
+            /* max-height: 100px; */
             max-width: 400px;
             width: auto;
             height: auto;
@@ -402,17 +410,35 @@
             </div>
         </div>
         <div id="results" class="table-wrapper" aria-live="polite"></div>
-        
+
         <div class="bottom-image">
             <div class="autoMargin">ניסוי פרסומת, לא יודע מה יצא פה</div>
             <!-- <img src="https://picsum.photos/400/100" alt="אולי בהמשך פרסומת" /> -->
             <div id="frame"
-            style="width: 100%;margin: auto;background: rgba(0, 0, 0, 0.50);position: relative; z-index: 99998;">
-            <iframe data-aa='2408072' src='//acceptable.a-ads.com/2408072/?size=Adaptive'
-            style='border:0; padding:0; width:70%; height:auto; overflow:hidden;display: block;margin: auto'></iframe>
+                style="width: 100%;margin: auto;background: rgba(0, 0, 0, 0.50);position: relative; z-index: 99998;">
+                <iframe data-aa='2408072' src='//acceptable.a-ads.com/2408072/?size=Adaptive'
+                    style='border:0; padding:0; width:70%; height:auto; overflow:hidden;display: block;margin: auto'></iframe>
+            </div>
+            <div>
+                <h3 class="bold">הערות</h3>
+                <ul>
+                    <li>בסימון מספר מעמדות, יחשב הסיכוי לזכות בכל אחת מהן ובהגרלה הכללית של הפרוייקט</li>
+                    <li>לוחמים יוגרלו שוב במעמד מילואים תוך חיסור מי שזכה</li>
+                    <li>בהגרלה הכללית של הפרוייקט יוחסרו מספר הזוכים והדירות מההגרלות לפי מעמד</li>
+                    <li>'אחוז הרשומים בכל הפרוייקטים' ירד מפרוייקט לפרוייקט, כך שאם הגדרנו ש-90% נמצאים בכל ההגרלות, אז
+                        בין הפרוייקטים ניתן להוריד ממספר הנרשמים 90% ממספר הזוכים מהפרוייקטים הקודמים, והסיכויי הזכייה
+                        עולים</li>
+                    <li>כאשר יש מספר ומתחתיו מספר בסוגריים, המספר העליון הוא מידע הבסיס, והתחתון מחושב בפועל לאחר הורדת
+                        הזוכים הקודמים</li>
+                </ul>
+            </div>
+            <!-- <div>
+                <h3>הצהרת נגישות</h3>
+                <div>ניסיתי שהכל יעמוד בכללי הנגישות אך בגלל שהעמוד לשימוש שלי ולעמוד מעט מאוד משתמשים אין צורך חוקי
+                    לעשות זאת</div>
+            </div> -->
         </div>
     </div>
-</div>
     <script>
         let data = {};
         let currentDate;
