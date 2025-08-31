@@ -392,7 +392,7 @@ fieldset {
 #results-caption:after {
     content: '';
     position: absolute;
-    right: 15px;
+    left: 25px;
     top: 50%;
     transform: translateY(-50%);
     width: 0;
@@ -626,4 +626,61 @@ body:has(.loader) {
 .loader {
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(8px);
+}
+
+.total-chance-summary {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    margin: 30px 0;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.total-chance-summary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
+    pointer-events: none;
+}
+
+.total-chance-content {
+    position: relative;
+    z-index: 1;
+}
+
+.total-chance-title {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 10px;
+    opacity: 0.9;
+}
+
+.total-chance-value {
+    font-size: 2.5em;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    margin: 10px 0;
+}
+
+.total-chance-subtitle {
+    font-size: 0.9em;
+    opacity: 0.8;
+    margin-top: 5px;
+}
+
+.cities-count {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    display: inline-block;
+    margin-top: 10px;
+    font-weight: 500;
 }
