@@ -508,9 +508,9 @@ tbody tr:last-child td {
         border-radius: var(--radius-md);
     }
 
-    table {
+    /* table {
         min-width: 800px;
-    }
+    } */
 }
 
 @media screen and (max-width: 600px) {
