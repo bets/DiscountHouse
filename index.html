@@ -38,15 +38,14 @@
                         </div>
 
                         <h3 id="percent-title">הערכות</h3>
-                        <div class="note">כל עוד אין מידע
-                            רשמי
-                            המחשבון
-                            ישתמש בהערכה זו</div>
+                        <div class="note">כל עוד אין מידע רשמי המחשבון ישתמש בהערכה זו</div>
                         <div class="input-container-grid" role="group" aria-labelledby="percent-title">
-                            <label for="combatPercent" title="מתוך כלל הנרשמים להגרלה">אחוז משרתי מילואים קרביים: </label>
+                            <label for="combatPercent" title="מתוך כלל הנרשמים להגרלה">אחוז משרתי מילואים קרביים:
+                            </label>
                             <input type="number" id="combatPercent" min="0" max="100" step="1" value="10"
                                 aria-label="אחוז משרתי מילואים קרביים">
-                            <label for="reservedPercent" title="מתוך כלל הנרשמים להגרלה">אחוז משרתי מילואים לא קרבי: </label>
+                            <label for="reservedPercent" title="מתוך כלל הנרשמים להגרלה">אחוז משרתי מילואים לא קרבי:
+                            </label>
                             <input type="number" id="reservedPercent" min="0" max="100" step="1" value="10"
                                 aria-label="אחוז משרתי מילואים">
 
@@ -112,6 +111,7 @@
             <ul>
                 <li>בסימון מספר מעמדות, יחשב הסיכוי לזכות בכל אחת מהן ובהגרלה הכללית של הפרוייקט</li>
                 <li>לוחמים יוגרלו שוב במעמד מילואים תוך חיסור מי שזכה</li>
+                <li>אם קרבי ומילואים הוגדרו 0 אז נניח שיש נרשמים לפי כמות הדירות</li>
                 <li>בהגרלה הכללית של הפרוייקט יוחסרו מספר הזוכים והדירות מההגרלות לפי מעמד</li>
                 <li>'אחוז הרשומים בכל הפרוייקטים' ירד מפרוייקט לפרוייקט, כך שאם הגדרנו ש-90% נמצאים בכל ההגרלות, אז
                     בין הפרוייקטים ניתן להוריד ממספר הנרשמים 90% ממספר הזוכים מהפרוייקטים הקודמים, וסיכויי הזכייה
@@ -213,7 +213,7 @@
                     currentDate = new Date();
                 } else {
                     // Small delay to visualize update
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise(resolve => setTimeout(resolve, 700));
                 }
 
                 // Decide which cities to process:
@@ -277,6 +277,13 @@
                 `;
 
                         projects.forEach((project) => {
+                            // Units per category
+                            const units_h = Number(project.HousingUnitsForHandicapped) || 0;
+                            const units_c = Number(project.HU_CombatReservist_L) || 0;
+                            const units_r = Number(project.HU_Reservists_L) || 0;
+                            const units_l = Number(project.LocalHousing) || 0;
+                            const total_units = Number(project.LotteryApparmentsNum) || 0;
+
                             // ----- TOTAL subscribers: original (raw) -----
                             const raw_total_subs = Number(project.TotalSubscribers) || 0;
 
@@ -294,15 +301,17 @@
                             const apiCombat = Number(project.TotalCombatReservistSubscribers);
                             const orig_c = (Number.isFinite(apiCombat) && apiCombat > 0)
                                 ? Math.floor(apiCombat)
-                                : Math.floor(combatPercent > 0 ? raw_total_subs * combatPercent : 0);
-                            let subs_c = Math.max(0, Math.floor(orig_c - recurringPercent * cumulativeWinners.combat));
+                                : Math.floor(combatPercent > 0 ? raw_total_subs * combatPercent : units_c);
+                            const noInputMin_c = combatPercent == 0 && apiCombat == 0 ? units_c : 0;
+                            let subs_c = Math.max(noInputMin_c, Math.floor(orig_c - recurringPercent * cumulativeWinners.combat));
 
                             // ----- Reservists -----
                             const apiReserved = Number(project.TotalReservedDutySubscribers);
                             const orig_r = (Number.isFinite(apiReserved) && apiReserved > 0)
                                 ? Math.floor(apiReserved)
-                                : Math.floor(reservedPercent > 0 ? raw_total_subs * reservedPercent : 0);
-                            let subs_r = Math.max(0, Math.floor(orig_r - recurringPercent * cumulativeWinners.reservist));
+                                : Math.floor(reservedPercent > 0 ? raw_total_subs * reservedPercent : units_r);
+                            const noInputMin_r = reservedPercent == 0 && apiReserved == 0 ? units_r : 0;
+                            let subs_r = Math.max(noInputMin_r, Math.floor(orig_r - recurringPercent * cumulativeWinners.reservist));
 
                             // ----- Local -----
                             const apiLocal = Number(project.TotalLocalSubscribers);
@@ -310,13 +319,6 @@
                                 ? Math.floor(apiLocal)
                                 : Math.floor(raw_total_subs * inferredLocalPercent);
                             let subs_l = Math.max(0, Math.floor(orig_l - recurringPercent * cumulativeWinners.local));
-
-                            // Units per category
-                            const units_h = Number(project.HousingUnitsForHandicapped) || 0;
-                            const units_c = Number(project.HU_CombatReservist_L) || 0;
-                            const units_r = Number(project.HU_Reservists_L) || 0;
-                            const units_l = Number(project.LocalHousing) || 0;
-                            const total_units = Number(project.LotteryApparmentsNum) || 0;
 
                             // Price field
                             const price_per_unit = (project.PricePerUnit ?? '');
