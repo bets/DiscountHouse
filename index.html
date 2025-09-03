@@ -184,7 +184,8 @@
                 return `${origStr}<div title="${title}">(${calcStr})</div>`;
             }
             function showPctOrDash(v) {
-                return (!isNaN(v) && isFinite(v)) ? (v * 100).toFixed(2) + '%' : '-';
+                const result = (!isNaN(v) && isFinite(v)) ? (v * 100).toFixed(2).replace(/\.?0*$/,'') + '%' : '-';
+                return result;
             }
             function isLocal(project) {
                 return project && project.CityDescription === localCity;
