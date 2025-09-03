@@ -139,9 +139,9 @@
         document.getElementById('handicappedSubscriber').checked = localStorage.getItem('isHandicapped') === 'true';
         document.getElementById('reservedDutySubscriber').checked = localStorage.getItem('isReserved') === 'true';
         document.getElementById('combatReservistSubscriber').checked = localStorage.getItem('isCombat') === 'true';
-        document.getElementById('combatPercent').value = (parseFloat(localStorage.getItem('combatPercent')) * 100) || 10;
-        document.getElementById('reservedPercent').value = (parseFloat(localStorage.getItem('reservedPercent')) * 100) || 10;
-        document.getElementById('recurringSubscribersPercent').value = (parseFloat(localStorage.getItem('recurringPercent')) * 100) || 90;
+        document.getElementById('combatPercent').value = parseInt(localStorage.getItem('combatPercent') * 100) || 10;
+        document.getElementById('reservedPercent').value = parseInt(localStorage.getItem('reservedPercent') * 100) || 10;
+        document.getElementById('recurringSubscribersPercent').value = parseInt(localStorage.getItem('recurringPercent') * 100) || 90;
 
         let data = {};
         let currentDate;
@@ -485,7 +485,8 @@
                 const dateString = `${day}.${month}.${year}`;
                 const timeString = currentDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
                 document.getElementById('results').innerHTML += `
-            <p>מעודכן ל ${dateString} ${timeString} (רענון הדף ייבא נתונים מחדש)</p>
+            <p>מעודכן ל ${dateString} ${timeString}
+                <br/>(רענון הדף ייבא נתונים מחדש)</p>
         `;
 
             } catch (error) {
