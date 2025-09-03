@@ -184,7 +184,7 @@
                 return `${origStr}<div title="${title}">(${calcStr})</div>`;
             }
             function showPctOrDash(v) {
-                const result = (!isNaN(v) && isFinite(v)) ? (v * 100).toFixed(2).replace(/\.?0*$/,'') + '%' : '-';
+                const result = (!isNaN(v) && isFinite(v)) ? (v * 100).toFixed(1).replace(/\.?0*$/,'') + '%' : '-';
                 return result;
             }
             function isLocal(project) {
@@ -363,7 +363,7 @@
                             safeAddChance(chance_l);
                             safeAddChance(chance_g);
 
-                            const overall_chance_percent = (!isNaN(overall_chance) && isFinite(overall_chance)) ? (overall_chance * 100).toFixed(2) + '%' : '-';
+                            const overall_chance_percent = (!isNaN(overall_chance) && isFinite(overall_chance)) ? (overall_chance * 100).toFixed(1).replace(/\.?0*$/,'') + '%' : '-';
                             overallChances.push(!isNaN(overall_chance) && isFinite(overall_chance) ? Math.max(0, Math.min(1, overall_chance)) : 0);
 
                             // Update cumulative winners
